@@ -1262,7 +1262,13 @@ async def run_mcp_server():
         logger.info(
             f'Running MCP server with HTTP transport on {mcp.settings.host}:{mcp.settings.port}'
         )
-        await mcp.run_http_async()
+        # Use run() method with HTTP transport parameters
+        mcp.run(
+            transport="http", 
+            host=mcp.settings.host, 
+            port=mcp.settings.port,
+            path="/mcp"
+        )
     elif mcp_config.transport == 'sse':
         logger.info(
             f'Running MCP server with SSE transport on {mcp.settings.host}:{mcp.settings.port}'
