@@ -1260,7 +1260,7 @@ async def run_mcp_server():
         await mcp.run_stdio_async()
     elif mcp_config.transport == 'http':
         logger.info(
-            f'Running MCP server with HTTP transport on {mcp.settings.host}:{mcp.settings.port}'
+            f'Running MCP server with HTTP transport on {mcp.settings.host}:{mcp.settings.port} - Fixed version'
         )
         # Use run() method with HTTP transport parameters
         mcp.run(
