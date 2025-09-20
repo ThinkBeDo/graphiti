@@ -1249,34 +1249,71 @@ async def initialize_server() -> MCPConfig:
     return MCPConfig.from_cli(args)
 
 
-async def run_mcp_server():
-    """Run the MCP server in the current event loop."""
+async def run_mcp_server_async():
+    """Run the MCP server with async transports (stdio, sse)."""
     # Initialize the server
     mcp_config = await initialize_server()
 
-    # Run the server with stdio transport for MCP in the same event loop
+    # Run the server with async transports only
     logger.info(f'Starting MCP server with transport: {mcp_config.transport}')
     if mcp_config.transport == 'stdio':
         await mcp.run_stdio_async()
-    elif mcp_config.transport == 'streamable-http':
-        logger.info(
-            f'Running MCP server with streamable HTTP transport on {mcp.settings.host}:{mcp.settings.port}'
-        )
-        # Use run() method with streamable-http transport
-        # Host and port are already configured via mcp.settings
-        mcp.run(transport="streamable-http")
     elif mcp_config.transport == 'sse':
         logger.info(
             f'Running MCP server with SSE transport on {mcp.settings.host}:{mcp.settings.port}'
         )
         await mcp.run_sse_async()
+    else:
+        raise ValueError(f"Async transport not supported: {mcp_config.transport}")
+
+
+def run_mcp_server_sync():
+    """Run the MCP server with sync transports (streamable-http)."""
+    import asyncio
+    
+    # Initialize async components first
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    try:
+        mcp_config = loop.run_until_complete(initialize_server())
+        
+        # Log and run with sync transport
+        logger.info(f'Starting MCP server with transport: {mcp_config.transport}')
+        if mcp_config.transport == 'streamable-http':
+            logger.info(
+                f'Running MCP server with streamable HTTP transport on {mcp.settings.host}:{mcp.settings.port}'
+            )
+            # Use run() method with streamable-http transport
+            # Host and port are already configured via mcp.settings
+            mcp.run(transport="streamable-http")
+        else:
+            raise ValueError(f"Sync transport not supported: {mcp_config.transport}")
+    finally:
+        loop.close()
 
 
 def main():
     """Main function to run the Graphiti MCP server."""
     try:
-        # Run everything in a single event loop
-        asyncio.run(run_mcp_server())
+        # Parse arguments to determine transport type
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            '--transport',
+            choices=['streamable-http', 'sse', 'stdio'],
+            default='streamable-http',
+        )
+        # Parse only known args to avoid conflicts with full parsing later
+        args, _ = parser.parse_known_args()
+        
+        # Route to appropriate handler based on transport
+        if args.transport == 'streamable-http':
+            # Use sync handler for streamable-http to avoid event loop conflicts
+            run_mcp_server_sync()
+        else:
+            # Use async handler for stdio and sse transports
+            asyncio.run(run_mcp_server_async())
+            
     except Exception as e:
         logger.error(f'Error initializing Graphiti MCP server: {str(e)}')
         raise
