@@ -512,7 +512,7 @@ class GraphitiConfig(BaseModel):
 class MCPConfig(BaseModel):
     """Configuration for MCP server."""
 
-    transport: str = 'http'  # Default to HTTP transport
+    transport: str = 'streamable-http'  # Default to streamable HTTP transport
 
     @classmethod
     def from_cli(cls, args: argparse.Namespace) -> 'MCPConfig':
@@ -1173,9 +1173,9 @@ async def initialize_server() -> MCPConfig:
     )
     parser.add_argument(
         '--transport',
-        choices=['http', 'sse', 'stdio'],
-        default='http',
-        help='Transport to use for communication with the client. (default: http)',
+        choices=['streamable-http', 'sse', 'stdio'],
+        default='streamable-http',
+        help='Transport to use for communication with the client. (default: streamable-http)',
     )
     parser.add_argument(
         '--model', help=f'Model name to use with the LLM client. (default: {DEFAULT_LLM_MODEL})'
@@ -1258,17 +1258,13 @@ async def run_mcp_server():
     logger.info(f'Starting MCP server with transport: {mcp_config.transport}')
     if mcp_config.transport == 'stdio':
         await mcp.run_stdio_async()
-    elif mcp_config.transport == 'http':
+    elif mcp_config.transport == 'streamable-http':
         logger.info(
-            f'Running MCP server with HTTP transport on {mcp.settings.host}:{mcp.settings.port} - Fixed version'
+            f'Running MCP server with streamable HTTP transport on {mcp.settings.host}:{mcp.settings.port}'
         )
-        # Use run() method with HTTP transport parameters
-        mcp.run(
-            transport="http", 
-            host=mcp.settings.host, 
-            port=mcp.settings.port,
-            path="/mcp"
-        )
+        # Use run() method with streamable-http transport
+        # Host and port are already configured via mcp.settings
+        mcp.run(transport="streamable-http")
     elif mcp_config.transport == 'sse':
         logger.info(
             f'Running MCP server with SSE transport on {mcp.settings.host}:{mcp.settings.port}'

@@ -51,8 +51,8 @@ Set these environment variables in your Railway project:
 After successful deployment, Railway will provide a URL like:
 `https://graphiti-production-xxxx.up.railway.app`
 
-Your MCP SSE endpoint will be:
-`https://graphiti-production-xxxx.up.railway.app/sse`
+Your MCP HTTP endpoint will be:
+`https://graphiti-production-xxxx.up.railway.app/mcp`
 
 ## ChatGPT Integration
 
@@ -64,8 +64,8 @@ Configure your ChatGPT client with:
 {
   "mcpServers": {
     "graphiti-memory": {
-      "transport": "sse",
-      "url": "https://your-railway-domain.up.railway.app/sse"
+      "transport": "streamable-http",
+      "url": "https://your-railway-domain.up.railway.app/mcp"
     }
   }
 }
@@ -74,7 +74,7 @@ Configure your ChatGPT client with:
 ### Custom ChatGPT Integration
 
 If using a custom ChatGPT integration, make HTTP requests to:
-- **SSE Endpoint**: `https://your-railway-domain.up.railway.app/sse`
+- **HTTP Endpoint**: `https://your-railway-domain.up.railway.app/mcp`
 - **Tools Available**: `add_memory`, `search_memory_nodes`, `search_memory_facts`, etc.
 
 ## Claude Desktop Integration
@@ -88,7 +88,7 @@ For Claude Desktop (requires mcp-remote bridge):
       "command": "npx",
       "args": [
         "mcp-remote",
-        "https://your-railway-domain.up.railway.app/sse"
+        "https://your-railway-domain.up.railway.app/mcp"
       ]
     }
   }
@@ -99,14 +99,14 @@ For Claude Desktop (requires mcp-remote bridge):
 
 ### 1. Verify Server Status
 
-Visit: `https://your-railway-domain.up.railway.app/sse`
+Visit: `https://your-railway-domain.up.railway.app/mcp`
 
-You should see an SSE connection established.
+You should see an HTTP MCP connection established.
 
 ### 2. Test with MCP Inspector
 
 ```bash
-npx @modelcontextprotocol/inspector --url https://your-railway-domain.up.railway.app/sse
+npx @modelcontextprotocol/inspector --transport streamable-http --url https://your-railway-domain.up.railway.app/mcp
 ```
 
 Expected tools:
