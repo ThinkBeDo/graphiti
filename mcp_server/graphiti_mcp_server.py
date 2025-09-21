@@ -512,7 +512,7 @@ class GraphitiConfig(BaseModel):
 class MCPConfig(BaseModel):
     """Configuration for MCP server."""
 
-    transport: str = 'streamable-http'  # Default to streamable HTTP transport
+    transport: str = 'sse'  # Default to SSE transport for ChatGPT compatibility
 
     @classmethod
     def from_cli(cls, args: argparse.Namespace) -> 'MCPConfig':
@@ -1173,9 +1173,9 @@ async def initialize_server() -> MCPConfig:
     )
     parser.add_argument(
         '--transport',
-        choices=['streamable-http', 'sse', 'stdio'],
-        default='streamable-http',
-        help='Transport to use for communication with the client. (default: streamable-http)',
+        choices=['sse', 'streamable-http', 'stdio'],
+        default='sse',
+        help='Transport to use for communication with the client. (default: sse)',
     )
     parser.add_argument(
         '--model', help=f'Model name to use with the LLM client. (default: {DEFAULT_LLM_MODEL})'
