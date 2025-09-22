@@ -5,7 +5,15 @@ FastAPI app for Graphiti MCP Server with SSE transport for ChatGPT Custom Connec
 
 import os
 import logging
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from mcp.server.fastmcp import MCP, SSETransport
+
+# Try primary import path first, then fallback
+try:
+    from mcp.server.sse import create_fastapi_app
+except ImportError:
+    # Fallback for older mcp versions
+    from mcp.server.fastapi import create_app as create_fastapi_app
 
 # Import the existing MCP instance
 import graphiti_mcp_server
@@ -18,29 +26,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Create FastAPI app
-app = FastAPI(
-    title="Graphiti MCP Server",
-    description="MCP server for Graphiti memory system with SSE transport for ChatGPT",
-    version="1.0.0"
-)
+# Build the FastAPI app via the factory. This mounts /sse and /healthz.
+app: FastAPI = create_fastapi_app(graphiti_mcp_server.mcp, transport_cls=SSETransport)
 
-# Add SSE endpoint for ChatGPT Custom Connector
-# FastMCP provides an sse_handler method for SSE transport
-@app.api_route("/sse", methods=["GET", "POST"])
-async def handle_sse(request: Request):
-    """Handle SSE requests from ChatGPT Custom Connector"""
-    return await graphiti_mcp_server.mcp.sse_handler(request)
-
+# Optional convenience roots (don't touch external services here)
 @app.get("/")
 def root():
     """Root endpoint for health checks"""
     return {"ok": True, "service": "graphiti-mcp", "transport": "sse"}
-
-@app.get("/healthz")
-def health():
-    """Health check endpoint"""
-    return {"status": "healthy", "service": "graphiti-mcp"}
 
 @app.get("/mcp/manifest.json")
 def mcp_manifest():
