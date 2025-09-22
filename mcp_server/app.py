@@ -5,20 +5,27 @@ FastAPI app for Graphiti MCP Server with SSE transport for ChatGPT Custom Connec
 
 import os
 import logging
-import argparse
-from fastapi import FastAPI
-from mcp.server.fastmcp import FastMCP
-from mcp.server.sse import create_fastapi_app, SSETransport
+from fastapi import FastAPI, Request
 
-# Import the existing MCP instance and setup functions
-# We need to import these carefully to avoid circular imports
+# Import the existing MCP instance
 import graphiti_mcp_server
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Build FastAPI app with /sse endpoint for ChatGPT Custom Connector
-app: FastAPI = create_fastapi_app(graphiti_mcp_server.mcp, transport_cls=SSETransport)
+# Create FastAPI app
+app = FastAPI(
+    title="Graphiti MCP Server",
+    description="MCP server for Graphiti memory system with SSE transport for ChatGPT",
+    version="1.0.0"
+)
+
+# Add SSE endpoint for ChatGPT Custom Connector
+# FastMCP provides an sse_handler method for SSE transport
+@app.api_route("/sse", methods=["GET", "POST"])
+async def handle_sse(request: Request):
+    """Handle SSE requests from ChatGPT Custom Connector"""
+    return await graphiti_mcp_server.mcp.sse_handler(request)
 
 @app.get("/")
 def root():
@@ -35,18 +42,9 @@ async def startup_event():
     """Initialize Graphiti when the app starts"""
     logger.info("Initializing Graphiti MCP Server with SSE transport for ChatGPT")
     
-    # Simulate the CLI args that the original server expects
-    import sys
-    sys.argv = [
-        "app.py",
-        "--transport", "sse",
-        "--host", os.environ.get("HOST", "0.0.0.0"),
-        "--port", os.environ.get("PORT", "8080")
-    ]
-    
     try:
-        # Initialize using the existing initialization logic
-        mcp_config = await graphiti_mcp_server.initialize_server()
+        # Initialize the Graphiti server
+        await graphiti_mcp_server.initialize_graphiti()
         logger.info("Graphiti MCP Server ready - SSE endpoint available at /sse")
     except Exception as e:
         logger.error(f"Failed to initialize Graphiti: {e}")
