@@ -42,6 +42,72 @@ def health():
     """Health check endpoint"""
     return {"status": "healthy", "service": "graphiti-mcp"}
 
+@app.get("/mcp/manifest.json")
+def mcp_manifest():
+    """MCP manifest endpoint for client discovery"""
+    return {
+        "id": "graphiti-memory",
+        "name": "Graphiti Memory System",
+        "description": "A temporally-aware knowledge graph for AI agents with episodic memory capabilities",
+        "attributes": {
+            "version": "1.0.0",
+            "transport": "sse",
+            "endpoint": "/sse",
+            "capabilities": [
+                "add_memory",
+                "search_memory_nodes",
+                "search_memory_facts",
+                "delete_entity_edge",
+                "delete_episode",
+                "get_entity_edge",
+                "get_episodes",
+                "clear_graph"
+            ]
+        },
+        "environmentVariablesJsonSchema": {
+            "type": "object",
+            "required": ["OPENAI_API_KEY", "NEO4J_URI", "NEO4J_USER", "NEO4J_PASSWORD"],
+            "properties": {
+                "OPENAI_API_KEY": {
+                    "type": "string",
+                    "description": "OpenAI API key for LLM operations"
+                },
+                "NEO4J_URI": {
+                    "type": "string",
+                    "description": "Neo4j database connection URI"
+                },
+                "NEO4J_USER": {
+                    "type": "string",
+                    "description": "Neo4j database username"
+                },
+                "NEO4J_PASSWORD": {
+                    "type": "string",
+                    "description": "Neo4j database password"
+                },
+                "MODEL_NAME": {
+                    "type": "string",
+                    "description": "LLM model name (e.g., gpt-4-turbo)",
+                    "default": "gpt-4-turbo"
+                },
+                "SMALL_MODEL_NAME": {
+                    "type": "string",
+                    "description": "Small LLM model for simple tasks",
+                    "default": "gpt-4o-mini"
+                },
+                "SEMAPHORE_LIMIT": {
+                    "type": "integer",
+                    "description": "Concurrent operations limit",
+                    "default": 10
+                },
+                "LLM_TEMPERATURE": {
+                    "type": "number",
+                    "description": "LLM temperature setting",
+                    "default": 0.0
+                }
+            }
+        }
+    }
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize Graphiti when the app starts"""
