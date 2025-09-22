@@ -9,8 +9,13 @@ from fastapi import FastAPI, Request
 
 # Import the existing MCP instance
 import graphiti_mcp_server
+from graphiti_mcp_server import GraphitiConfig
 
-# Set up logging
+# Set up detailed logging with environment variable debugging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Create FastAPI app
@@ -42,12 +47,36 @@ async def startup_event():
     """Initialize Graphiti when the app starts"""
     logger.info("Initializing Graphiti MCP Server with SSE transport for ChatGPT")
     
+    # Log environment variables for debugging (without exposing sensitive values)
+    logger.info("Environment variable check:")
+    logger.info(f"  OPENAI_API_KEY: {'SET' if os.environ.get('OPENAI_API_KEY') else 'NOT SET'}")
+    logger.info(f"  MODEL_NAME: {os.environ.get('MODEL_NAME', 'NOT SET')}")
+    logger.info(f"  SMALL_MODEL_NAME: {os.environ.get('SMALL_MODEL_NAME', 'NOT SET')}")
+    logger.info(f"  NEO4J_URI: {os.environ.get('NEO4J_URI', 'NOT SET')}")
+    logger.info(f"  NEO4J_USER: {os.environ.get('NEO4J_USER', 'NOT SET')}")
+    logger.info(f"  NEO4J_PASSWORD: {'SET' if os.environ.get('NEO4J_PASSWORD') else 'NOT SET'}")
+    logger.info(f"  SEMAPHORE_LIMIT: {os.environ.get('SEMAPHORE_LIMIT', 'DEFAULT (10)')}")
+    
     try:
-        # Initialize the Graphiti server
+        # CRITICAL: Initialize config from environment variables BEFORE calling initialize_graphiti
+        logger.info("Loading configuration from environment variables...")
+        graphiti_mcp_server.config = GraphitiConfig.from_env()
+        logger.info("Configuration loaded successfully")
+        
+        # Log the loaded configuration (without sensitive values)
+        logger.info(f"Config - LLM Model: {graphiti_mcp_server.config.llm.model}")
+        logger.info(f"Config - Small Model: {graphiti_mcp_server.config.llm.small_model}")
+        logger.info(f"Config - Temperature: {graphiti_mcp_server.config.llm.temperature}")
+        logger.info(f"Config - Neo4j URI: {graphiti_mcp_server.config.neo4j.uri}")
+        logger.info(f"Config - API Key Present: {bool(graphiti_mcp_server.config.llm.api_key)}")
+        
+        # Initialize the Graphiti server with the loaded config
         await graphiti_mcp_server.initialize_graphiti()
         logger.info("Graphiti MCP Server ready - SSE endpoint available at /sse")
     except Exception as e:
         logger.error(f"Failed to initialize Graphiti: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
+        logger.error(f"Error details: {str(e)}")
         raise
 
 if __name__ == "__main__":
